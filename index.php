@@ -8,15 +8,10 @@
 // echo "index.php is being executed.<br>";
 // debugging END
 
-require 'includes/shared.php';
+require 'includes/kernel.php';
 
 if (CLI)
     die("this script must not be run from CLI.\nto setup aowow use 'php aowow'\n");
-
-
-// maybe add additional setup checks?
-if (!DB::isConnectable(DB_AOWOW) || !DB::isConnectable(DB_WORLD))
-    (new GenericPage($pageCall))->maintenance();
 
 
 $altClass = '';
@@ -102,6 +97,9 @@ switch ($pageCall)
     case 'edit':                                            // guide editor: targeted by QQ fileuploader, detail-page article editor
     case 'get-description':                                 // guide editor: shorten fulltext into description
     case 'filter':                                          // pre-evaluate filter POST-data; sanitize and forward as GET-data
+    case 'go-to-reply':                                     // find page the reply is on and forward
+        if ($pageCall == 'go-to-reply')
+            $altClass = 'go-to-comment';
     case 'go-to-comment':                                   // find page the comment is on and forward
     case 'locale':                                          // subdomain-workaround, change the language
         $cleanName = str_replace(['-', '_'], '', ucFirst($altClass ?: $pageCall));
@@ -134,7 +132,7 @@ switch ($pageCall)
             if (is_callable([$classInstance, 'display']))
                 $classInstance->display();
             else if (isset($_GET['power']))
-                die('$WowheadPower.register(0, '.User::$localeId.', {})');
+                die('$WowheadPower.register(0, '.Lang::getLocale()->value.', {})');
             else                                            // in conjunction with a proper rewriteRule in .htaccess...
                 (new GenericPage($pageCall))->error();
         }
@@ -166,7 +164,7 @@ switch ($pageCall)
         break;
     default:                                                // unk parameter given -> ErrorPage
         if (isset($_GET['power']))
-            die('$WowheadPower.register(0, '.User::$localeId.', {})');
+            die('$WowheadPower.register(0, '.Lang::getLocale()->value.', {})');
         else                                                // in conjunction with a proper rewriteRule in .htaccess...
             (new GenericPage($pageCall))->error();
         break;
